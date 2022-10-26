@@ -1,0 +1,77 @@
+#!/usr/bin/make -f
+# -*- makefile -*-
+
+# Uncomment this to turn on verbose mode.
+#export DH_VERBOSE=1
+
+DEB_HOST_MULTIARCH ?= $(shell dpkg-architecture -qDEB_HOST_MULTIARCH)
+DOC_PKG_DIR = $(CURDIR)/debian/libcrypto++-doc/
+
+CXXFLAGS+=-DNDEBUG
+
+SONAME=8
+
+PREFIX=/usr
+LIBDIR=$(PREFIX)/lib/$(DEB_HOST_MULTIARCH)/
+
+override_dh_auto_clean:
+	dh_auto_clean
+	rm -f $(CURDIR)/libcrypto++.pc.in $(CURDIR)/config.log
+	rm -rf $(CURDIR)/html-docs/
+	# these will be re-generated
+	rm -f $(CURDIR)/debian/libcrypto++$(SONAME).links \
+		$(CURDIR)/debian/libcrypto++-dev.links
+
+override_dh_auto_build-arch:
+	PREFIX=$(PREFIX) LIBDIR=$(LIBDIR) dh_auto_build -a \
+	       -- all libcrypto++.pc
+
+override_dh_auto_build-indep:
+	doxygen
+
+override_dh_auto_install:
+	# use automake
+	PREFIX=$(PREFIX) LIBDIR=$(LIBDIR) dh_auto_install
+	# install test files
+	mkdir -p $(CURDIR)/debian/tmp/usr/share/crypto--/
+	cp -a $(CURDIR)/TestVectors $(CURDIR)/debian/tmp/usr/share/crypto--/
+	chmod a-x $(CURDIR)/debian/tmp/usr/share/crypto--/TestVectors/*.txt
+	cp -a $(CURDIR)/TestData $(CURDIR)/debian/tmp/usr/share/crypto--/
+	# install pkg-config file
+	mkdir -p $(CURDIR)/debian/tmp/usr/lib/${DEB_HOST_MULTIARCH}/pkgconfig/
+#	cp -a $(CURDIR)/*.pc \
+		$(CURDIR)/debian/tmp/usr/lib/${DEB_HOST_MULTIARCH}/pkgconfig/
+	# generate links files
+	sed s/ARCH/${DEB_HOST_MULTIARCH}/g \
+		$(CURDIR)/debian/libcrypto++$(SONAME).links.in \
+		>$(CURDIR)/debian/libcrypto++$(SONAME).links
+	sed s/ARCH/${DEB_HOST_MULTIARCH}/g \
+		$(CURDIR)/debian/libcrypto++-dev.links.in \
+		>$(CURDIR)/debian/libcrypto++-dev.links
+
+override_dh_auto_test-arch:
+ifeq (,$(filter nocheck,$(DEB_BUILD_OPTIONS)))
+	$(CURDIR)/cryptest v
+endif
+
+override_dh_auto_test-indep:
+
+override_dh_installdocs:
+	dh_installdocs
+	if [ -d "$(DOC_PKG_DIR)/usr/share/doc/libcrypto++-dev/html-docs" ]; then \
+		mv $(DOC_PKG_DIR)/usr/share/doc/libcrypto++-dev/html-docs \
+		$(DOC_PKG_DIR)/usr/share/doc/libcrypto++-dev/html; \
+	fi
+
+# skip files failing with "Unknown DWARF DW_OP_255" (see bug#949296)
+override_dh_dwz:
+	dh_dwz --exclude=usr/bin/cryptest \
+		--exclude=usr/lib/$(DEB_HOST_MULTIARCH)/libcrypto++.so.8.6.0
+
+%:
+	dh $@
+
+.PHONY: override_dh_auto_clean override_dh_auto_build-arch \
+	override_dh_auto_build-indep override_dh_auto_install \
+	override_dh_installdocs override_dh_dwz \
+	override_dh_auto_test-arch override_dh_auto_test-indep

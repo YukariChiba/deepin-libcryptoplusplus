@@ -1,0 +1,379 @@
+Description: use crypto++ instead of cryptopp
+Author: Laszlo Boszormenyi (GCS) <gcs@debian.org>
+Forwarded: not-needed
+Last-Update: 2021-09-25
+
+---
+
+--- a/GNUmakefile
++++ b/GNUmakefile
+@@ -14,10 +14,10 @@ TMPDIR ?= /tmp
+ TOUT ?= a.out
+ TOUT := $(strip $(TOUT))
+ 
+-# Allow override for the cryptest.exe recipe. Change to
+-# ./libcryptopp.so or ./libcryptopp.dylib to suit your
++# Allow override for the cryptest recipe. Change to
++# ./libcrypto++.so or ./libcrypto++.dylib to suit your
+ # taste. https://github.com/weidai11/cryptopp/issues/866
+-LINK_LIBRARY ?= libcryptopp.a
++LINK_LIBRARY ?= libcrypto++.a
+ LINK_LIBRARY_PATH ?= ./
+ 
+ # Command and arguments
+@@ -1128,7 +1128,7 @@ SOLIB_COMPAT_SUFFIX=.$(LIB_MAJOR)
+ ifneq ($(IS_LINUX)$(IS_HURD),00)
+ # Linux uses full version suffix for shared library
+ SOLIB_VERSION_SUFFIX=.$(LIB_MAJOR).$(LIB_MINOR).$(LIB_PATCH)
+-SOLIB_FLAGS=-Wl,-soname,libcryptopp.so$(SOLIB_COMPAT_SUFFIX)
++SOLIB_FLAGS=-Wl,-soname,libcrypto++.so$(SOLIB_COMPAT_SUFFIX)
+ endif
+ # Solaris uses -Wl,-h
+ ifeq ($(IS_SUN),1)
+@@ -1136,7 +1136,7 @@ ifeq ($(IS_SUN),1)
+ # The minor version allows previous version to remain and not overwritten.
+ # https://blogs.oracle.com/solaris/how-to-name-a-solaris-shared-object-v2
+ SOLIB_VERSION_SUFFIX=.$(LIB_MAJOR).$(LIB_MINOR)
+-SOLIB_FLAGS=-Wl,-h,libcryptopp.so$(SOLIB_COMPAT_SUFFIX)
++SOLIB_FLAGS=-Wl,-h,libcrypto++.so$(SOLIB_COMPAT_SUFFIX)
+ endif
+ endif # HAS_SOLIB_VERSION
+ 
+@@ -1242,36 +1242,36 @@ LDFLAGS  := $(strip $(CRYPTOPP_LDFLAGS)
+ 
+ # Default builds program with static library only
+ .PHONY: default
+-default: cryptest.exe
++default: cryptest
+ 
+ .PHONY: all static dynamic
+-all: static dynamic cryptest.exe
++all: static dynamic cryptest
+ 
+ ifneq ($(IS_DARWIN),0)
+-static: libcryptopp.a
+-shared dynamic dylib: libcryptopp.dylib
++static: libcrypto++.a
++shared dynamic dylib: libcrypto++.dylib
+ else
+-static: libcryptopp.a
+-shared dynamic: libcryptopp.so$(SOLIB_VERSION_SUFFIX)
++static: libcrypto++.a
++shared dynamic: libcrypto++.so$(SOLIB_VERSION_SUFFIX)
+ endif
+ 
+ # CXXFLAGS are tuned earlier.
+ .PHONY: native no-asm asan ubsan
+-native no-asm asan ubsan: cryptest.exe
++native no-asm asan ubsan: cryptest
+ 
+ # CXXFLAGS are tuned earlier. Applications must use linker flags
+ #  -Wl,--gc-sections (Linux and Unix) or -Wl,-dead_strip (OS X)
+ .PHONY: lean
+-lean: static dynamic cryptest.exe
++lean: static dynamic cryptest
+ 
+ # May want to export CXXFLAGS="-g3 -O1"
+ .PHONY: lcov coverage
+-lcov coverage: cryptest.exe
++lcov coverage: cryptest
+ 	@-$(RM) -r ./TestCoverage/
+ 	lcov --base-directory . --directory . --zerocounters -q
+-	./cryptest.exe v
+-	./cryptest.exe tv all
+-	./cryptest.exe b 0.25
++	./cryptest v
++	./cryptest tv all
++	./cryptest b 0.25
+ 	lcov --base-directory . --directory . -c -o cryptest.info
+ 	lcov --remove cryptest.info "adhoc.*" -o cryptest.info
+ 	lcov --remove cryptest.info "fips140.*" -o cryptest.info
+@@ -1281,20 +1281,20 @@ lcov coverage: cryptest.exe
+ 
+ # Travis CI and CodeCov rule
+ .PHONY: gcov codecov
+-gcov codecov: cryptest.exe
++gcov codecov: cryptest
+ 	@-$(RM) -r ./TestCoverage/
+-	./cryptest.exe v
+-	./cryptest.exe tv all
++	./cryptest v
++	./cryptest tv all
+ 	gcov -r $(SRCS)
+ 
+ # Should use CXXFLAGS="-g3 -O1"
+ .PHONY: valgrind
+-valgrind: cryptest.exe
+-	valgrind --track-origins=yes --suppressions=cryptopp.supp ./cryptest.exe v
++valgrind: cryptest
++	valgrind --track-origins=yes --suppressions=cryptopp.supp ./cryptest v
+ 
+ .PHONY: test check
+-test check: cryptest.exe
+-	./cryptest.exe v
++test check: cryptest
++	./cryptest v
+ 
+ # Used to generate list of source files for Autotools, CMakeList, Android.mk, etc
+ .PHONY: sources
+@@ -1334,13 +1334,13 @@ docs html:
+ .PHONY: clean
+ clean:
+ 	-$(RM) adhoc.cpp.o adhoc.cpp.proto.o $(CLEAN_OBJS) rdrand-*.o
+-	@-$(RM) libcryptopp.a libcryptopp.dylib cryptopp.dll libcryptopp.dll.a libcryptopp.import.a
+-	@-$(RM) libcryptopp.so libcryptopp.so$(SOLIB_COMPAT_SUFFIX) libcryptopp.so$(SOLIB_VERSION_SUFFIX)
+-	@-$(RM) cryptest.exe dlltest.exe cryptest.import.exe cryptest.dat ct et
++	@-$(RM) libcrypto++.a libcrypto++.dylib cryptopp.dll libcrypto++.dll.a libcrypto++.import.a
++	@-$(RM) libcrypto++.so libcrypto++.so$(SOLIB_COMPAT_SUFFIX) libcrypto++.so$(SOLIB_VERSION_SUFFIX)
++	@-$(RM) cryptest dlltest cryptest.import cryptest.dat ct et
+ 	@-$(RM) *.la *.lo *.gcov *.gcno *.gcda *.stackdump core core-*
+-	@-$(RM) /tmp/adhoc.exe
++	@-$(RM) /tmp/adhoc
+ 	@-$(RM) -r /tmp/cryptopp_test/
+-	@-$(RM) -r *.exe.dSYM/ *.dylib.dSYM/
++	@-$(RM) -r *.dSYM/ *.dylib.dSYM/
+ 	@-$(RM) -r cov-int/
+ 
+ .PHONY: autotools-clean
+@@ -1348,7 +1348,7 @@ autotools-clean:
+ 	@-$(RM) -f configure.ac configure configure.in Makefile.am Makefile.in Makefile
+ 	@-$(RM) -f config.guess config.status config.sub config.h.in compile depcomp
+ 	@-$(RM) -f install-sh stamp-h1 ar-lib *.lo *.la *.m4 local.* lt*.sh missing
+-	@-$(RM) -f cryptest cryptestcwd libtool* libcryptopp.la libcryptopp.pc*
++	@-$(RM) -f cryptest cryptestcwd libtool* libcrypto++.la libcrypto++.pc*
+ 	@-$(RM) -rf build-aux/ m4/ auto*.cache/ .deps/ .libs/
+ 
+ .PHONY: cmake-clean
+@@ -1365,145 +1365,145 @@ android-clean:
+ distclean: clean autotools-clean cmake-clean android-clean
+ 	-$(RM) adhoc.cpp adhoc.cpp.copied GNUmakefile.deps benchmarks.html cryptest.txt
+ 	-$(RM) cryptest_all.info cryptest_debug.info cryptest_noasm.info cryptest_base.info cryptest.info cryptest_release.info
+-	@-$(RM) cryptest-*.txt cryptopp.tgz libcryptopp.pc *.o *.bc *.ii *~
+-	@-$(RM) -r cryptlib.lib cryptest.exe *.suo *.sdf *.pdb Win32/ x64/ ipch/
++	@-$(RM) cryptest-*.txt cryptopp.tgz libcrypto++.pc *.o *.bc *.ii *~
++	@-$(RM) -r cryptlib.lib cryptest *.suo *.sdf *.pdb Win32/ x64/ ipch/
+ 	@-$(RM) -r $(LIBOBJS:.o=.obj) $(TESTOBJS:.o=.obj)
+ 	@-$(RM) -r $(LIBOBJS:.o=.lst) $(TESTOBJS:.o=.lst)
+ 	@-$(RM) -r TestCoverage/ ref*/
+ 	@-$(RM) cryptopp$(LIB_VER)\.* CryptoPPRef.zip
+ 
+-# Install cryptest.exe, libcryptopp.a, libcryptopp.so and libcryptopp.pc.
++# Install cryptest, libcrypto++.a, libcrypto++.so and libcrypto++.pc.
+ # The library install was broken-out into its own recipe at GH #653.
+ .PHONY: install
+-install: cryptest.exe install-lib
++install: cryptest install-lib
+ 	@-$(MKDIR) $(DESTDIR)$(BINDIR)
+-	$(CP) cryptest.exe $(DESTDIR)$(BINDIR)
+-	$(CHMOD) u=rwx,go=rx $(DESTDIR)$(BINDIR)/cryptest.exe
+-	@-$(MKDIR) $(DESTDIR)$(DATADIR)/cryptopp/TestData
+-	@-$(MKDIR) $(DESTDIR)$(DATADIR)/cryptopp/TestVectors
+-	$(CP) TestData/*.dat $(DESTDIR)$(DATADIR)/cryptopp/TestData
+-	$(CHMOD) u=rw,go=r $(DESTDIR)$(DATADIR)/cryptopp/TestData/*.dat
+-	$(CP) TestVectors/*.txt $(DESTDIR)$(DATADIR)/cryptopp/TestVectors
+-	$(CHMOD) u=rw,go=r $(DESTDIR)$(DATADIR)/cryptopp/TestVectors/*.txt
++	$(CP) cryptest $(DESTDIR)$(BINDIR)
++	$(CHMOD) u=rwx,go=rx $(DESTDIR)$(BINDIR)/cryptest
++	@-$(MKDIR) $(DESTDIR)$(DATADIR)/crypto++/TestData
++	@-$(MKDIR) $(DESTDIR)$(DATADIR)/crypto++/TestVectors
++	$(CP) TestData/*.dat $(DESTDIR)$(DATADIR)/crypto++/TestData
++	$(CHMOD) u=rw,go=r $(DESTDIR)$(DATADIR)/crypto++/TestData/*.dat
++	$(CP) TestVectors/*.txt $(DESTDIR)$(DATADIR)/crypto++/TestVectors
++	$(CHMOD) u=rw,go=r $(DESTDIR)$(DATADIR)/crypto++/TestVectors/*.txt
+ 
+-# A recipe to install only the library, and not cryptest.exe. Also
++# A recipe to install only the library, and not cryptest. Also
+ # see https://github.com/weidai11/cryptopp/issues/653. Some users
+-# already have a libcryptopp.pc. Install the *.pc file if the file
+-# is present. If you want one, then issue 'make libcryptopp.pc'.
++# already have a libcrypto++.pc. Install the *.pc file if the file
++# is present. If you want one, then issue 'make libcrypto++.pc'.
+ .PHONY: install-lib
+ install-lib:
+-	@-$(MKDIR) $(DESTDIR)$(INCLUDEDIR)/cryptopp
+-	$(CP) *.h $(DESTDIR)$(INCLUDEDIR)/cryptopp
+-	$(CHMOD) u=rw,go=r $(DESTDIR)$(INCLUDEDIR)/cryptopp/*.h
+-ifneq ($(wildcard libcryptopp.a),)
++	@-$(MKDIR) $(DESTDIR)$(INCLUDEDIR)/crypto++
++	$(CP) *.h $(DESTDIR)$(INCLUDEDIR)/crypto++
++	$(CHMOD) u=rw,go=r $(DESTDIR)$(INCLUDEDIR)/crypto++/*.h
++ifneq ($(wildcard libcrypto++.a),)
+ 	@-$(MKDIR) $(DESTDIR)$(LIBDIR)
+-	$(CP) libcryptopp.a $(DESTDIR)$(LIBDIR)
+-	$(CHMOD) u=rw,go=r $(DESTDIR)$(LIBDIR)/libcryptopp.a
++	$(CP) libcrypto++.a $(DESTDIR)$(LIBDIR)
++	$(CHMOD) u=rw,go=r $(DESTDIR)$(LIBDIR)/libcrypto++.a
+ endif
+-ifneq ($(wildcard libcryptopp.dylib),)
++ifneq ($(wildcard libcrypto++.dylib),)
+ 	@-$(MKDIR) $(DESTDIR)$(LIBDIR)
+-	$(CP) libcryptopp.dylib $(DESTDIR)$(LIBDIR)
+-	$(CHMOD) u=rwx,go=rx $(DESTDIR)$(LIBDIR)/libcryptopp.dylib
+-	-install_name_tool -id $(DESTDIR)$(LIBDIR)/libcryptopp.dylib $(DESTDIR)$(LIBDIR)/libcryptopp.dylib
++	$(CP) libcrypto++.dylib $(DESTDIR)$(LIBDIR)
++	$(CHMOD) u=rwx,go=rx $(DESTDIR)$(LIBDIR)/libcrypto++.dylib
++	-install_name_tool -id $(DESTDIR)$(LIBDIR)/libcrypto++.dylib $(DESTDIR)$(LIBDIR)/libcrypto++.dylib
+ endif
+-ifneq ($(wildcard libcryptopp.so$(SOLIB_VERSION_SUFFIX)),)
++ifneq ($(wildcard libcrypto++.so$(SOLIB_VERSION_SUFFIX)),)
+ 	@-$(MKDIR) $(DESTDIR)$(LIBDIR)
+-	$(CP) libcryptopp.so$(SOLIB_VERSION_SUFFIX) $(DESTDIR)$(LIBDIR)
+-	$(CHMOD) u=rwx,go=rx $(DESTDIR)$(LIBDIR)/libcryptopp.so$(SOLIB_VERSION_SUFFIX)
++	$(CP) libcrypto++.so$(SOLIB_VERSION_SUFFIX) $(DESTDIR)$(LIBDIR)
++	$(CHMOD) u=rwx,go=rx $(DESTDIR)$(LIBDIR)/libcrypto++.so$(SOLIB_VERSION_SUFFIX)
+ ifeq ($(HAS_SOLIB_VERSION),1)
+-	-$(LN) libcryptopp.so$(SOLIB_VERSION_SUFFIX) $(DESTDIR)$(LIBDIR)/libcryptopp.so
++	-$(LN) libcrypto++.so$(SOLIB_VERSION_SUFFIX) $(DESTDIR)$(LIBDIR)/libcrypto++.so
+ 	$(LDCONF) $(DESTDIR)$(LIBDIR)
+ endif
+ endif
+-ifneq ($(wildcard libcryptopp.pc),)
++ifneq ($(wildcard libcrypto++.pc),)
+ 	@-$(MKDIR) $(DESTDIR)$(LIBDIR)/pkgconfig
+-	$(CP) libcryptopp.pc $(DESTDIR)$(LIBDIR)/pkgconfig
+-	$(CHMOD) u=rw,go=r $(DESTDIR)$(LIBDIR)/pkgconfig/libcryptopp.pc
++	$(CP) libcrypto++.pc $(DESTDIR)$(LIBDIR)/pkgconfig
++	$(CHMOD) u=rw,go=r $(DESTDIR)$(LIBDIR)/pkgconfig/libcrypto++.pc
+ endif
+ 
+ .PHONY: remove uninstall
+ remove uninstall:
+-	-$(RM) -r $(DESTDIR)$(INCLUDEDIR)/cryptopp
+-	-$(RM) $(DESTDIR)$(LIBDIR)/libcryptopp.a
+-	-$(RM) $(DESTDIR)$(BINDIR)/cryptest.exe
+-ifneq ($(wildcard $(DESTDIR)$(LIBDIR)/libcryptopp.dylib),)
+-	-$(RM) $(DESTDIR)$(LIBDIR)/libcryptopp.dylib
+-endif
+-ifneq ($(wildcard $(DESTDIR)$(LIBDIR)/libcryptopp.so),)
+-	-$(RM) $(DESTDIR)$(LIBDIR)/libcryptopp.so
+-endif
+-	@-$(RM) $(DESTDIR)$(LIBDIR)/libcryptopp.so$(SOLIB_VERSION_SUFFIX)
+-	@-$(RM) $(DESTDIR)$(LIBDIR)/libcryptopp.so$(SOLIB_COMPAT_SUFFIX)
+-	@-$(RM) $(DESTDIR)$(LIBDIR)/pkgconfig/libcryptopp.pc
+-	@-$(RM) -r $(DESTDIR)$(DATADIR)/cryptopp
++	-$(RM) -r $(DESTDIR)$(INCLUDEDIR)/crypto++
++	-$(RM) $(DESTDIR)$(LIBDIR)/libcrypto++.a
++	-$(RM) $(DESTDIR)$(BINDIR)/cryptest
++ifneq ($(wildcard $(DESTDIR)$(LIBDIR)/libcrypto++.dylib),)
++	-$(RM) $(DESTDIR)$(LIBDIR)/libcrypto++.dylib
++endif
++ifneq ($(wildcard $(DESTDIR)$(LIBDIR)/libcrypto++.so),)
++	-$(RM) $(DESTDIR)$(LIBDIR)/libcrypto++.so
++endif
++	@-$(RM) $(DESTDIR)$(LIBDIR)/libcrypto++.so$(SOLIB_VERSION_SUFFIX)
++	@-$(RM) $(DESTDIR)$(LIBDIR)/libcrypto++.so$(SOLIB_COMPAT_SUFFIX)
++	@-$(RM) $(DESTDIR)$(LIBDIR)/pkgconfig/libcrypto++.pc
++	@-$(RM) -r $(DESTDIR)$(DATADIR)/crypto++
+ 
+-libcryptopp.a: $(LIBOBJS) | osx_warning
++libcrypto++.a: $(LIBOBJS) | osx_warning
+ 	$(AR) $(ARFLAGS) $@ $(LIBOBJS)
+ ifeq ($(IS_SUN),0)
+ 	$(RANLIB) $@
+ endif
+ 
+ ifeq ($(HAS_SOLIB_VERSION),1)
+-.PHONY: libcryptopp.so
+-libcryptopp.so: libcryptopp.so$(SOLIB_VERSION_SUFFIX) | so_warning
++.PHONY: libcrypto++.so
++libcrypto++.so: libcrypto++.so$(SOLIB_VERSION_SUFFIX) | so_warning
+ endif
+ 
+-libcryptopp.so$(SOLIB_VERSION_SUFFIX): $(LIBOBJS)
++libcrypto++.so$(SOLIB_VERSION_SUFFIX): $(LIBOBJS)
+ ifeq ($(XLC_COMPILER),1)
+ 	$(CXX) -qmkshrobj $(SOLIB_FLAGS) -o $@ $(CXXFLAGS) $(LDFLAGS) $(LIBOBJS) $(LDLIBS)
+ else
+ 	$(CXX) -shared $(SOLIB_FLAGS) -o $@ $(CXXFLAGS) $(LDFLAGS) $(LIBOBJS) $(LDLIBS)
+ endif
+ ifeq ($(HAS_SOLIB_VERSION),1)
+-	-$(LN) libcryptopp.so$(SOLIB_VERSION_SUFFIX) libcryptopp.so
+-	-$(LN) libcryptopp.so$(SOLIB_VERSION_SUFFIX) libcryptopp.so$(SOLIB_COMPAT_SUFFIX)
++	-$(LN) libcrypto++.so$(SOLIB_VERSION_SUFFIX) libcrypto++.so
++	-$(LN) libcrypto++.so$(SOLIB_VERSION_SUFFIX) libcrypto++.so$(SOLIB_COMPAT_SUFFIX)
+ endif
+ 
+-libcryptopp.dylib: $(LIBOBJS) | osx_warning
++libcrypto++.dylib: $(LIBOBJS) | osx_warning
+ 	$(CXX) -dynamiclib -o $@ $(CXXFLAGS) -install_name "$@" -current_version "$(LIB_MAJOR).$(LIB_MINOR).$(LIB_PATCH)" -compatibility_version "$(LIB_MAJOR).$(LIB_MINOR)" -headerpad_max_install_names $(LDFLAGS) $(LIBOBJS)
+ 
+-cryptest.exe: $(LINK_LIBRARY) $(TESTOBJS) | osx_warning
++cryptest: $(LINK_LIBRARY) $(TESTOBJS) | osx_warning
+ 	$(CXX) -o $@ $(CXXFLAGS) $(TESTOBJS) $(LINK_LIBRARY_PATH)$(LINK_LIBRARY) $(LDFLAGS) $(LDLIBS)
+ 
+ # Makes it faster to test changes
+ nolib: $(OBJS)
+ 	$(CXX) -o ct $(CXXFLAGS) $(OBJS) $(LDFLAGS) $(LDLIBS)
+ 
+-dll: cryptest.import.exe dlltest.exe
++dll: cryptest.import dlltest
+ 
+ cryptopp.dll: $(DLLOBJS)
+-	$(CXX) -shared -o $@ $(CXXFLAGS) $(DLLOBJS) $(LDFLAGS) $(LDLIBS) -Wl,--out-implib=libcryptopp.dll.a
++	$(CXX) -shared -o $@ $(CXXFLAGS) $(DLLOBJS) $(LDFLAGS) $(LDLIBS) -Wl,--out-implib=libcrypto++.dll.a
+ 
+-libcryptopp.import.a: $(LIBIMPORTOBJS)
++libcrypto++.import.a: $(LIBIMPORTOBJS)
+ 	$(AR) $(ARFLAGS) $@ $(LIBIMPORTOBJS)
+ ifeq ($(IS_SUN),0)
+ 	$(RANLIB) $@
+ endif
+ 
+-cryptest.import.exe: cryptopp.dll libcryptopp.import.a $(TESTIMPORTOBJS)
++cryptest.import: cryptopp.dll libcrypto++.import.a $(TESTIMPORTOBJS)
+ 	$(CXX) -o $@ $(CXXFLAGS) $(TESTIMPORTOBJS) -L. -lcryptopp.dll -lcryptopp.import $(LDFLAGS) $(LDLIBS)
+ 
+-dlltest.exe: cryptopp.dll $(DLLTESTOBJS)
++dlltest: cryptopp.dll $(DLLTESTOBJS)
+ 	$(CXX) -o $@ $(CXXFLAGS) $(DLLTESTOBJS) -L. -lcryptopp.dll $(LDFLAGS) $(LDLIBS)
+ 
+-# Some users already have a libcryptopp.pc. We install it if the file
+-# is present. If you want one, then issue 'make libcryptopp.pc'. Be sure
++# Some users already have a libcrypto++.pc. We install it if the file
++# is present. If you want one, then issue 'make libcrypto++.pc'. Be sure
+ # to use/verify PREFIX and LIBDIR below after writing the file.
+-cryptopp.pc libcryptopp.pc:
+-	@echo '# Crypto++ package configuration file' > libcryptopp.pc
+-	@echo '' >> libcryptopp.pc
+-	@echo 'prefix=$(PC_PREFIX)' >> libcryptopp.pc
+-	@echo 'libdir=$(PC_LIBDIR)' >> libcryptopp.pc
+-	@echo 'includedir=$(PC_INCLUDEDIR)' >> libcryptopp.pc
+-	@echo 'datadir=$(PC_DATADIR)' >> libcryptopp.pc
+-	@echo '' >> libcryptopp.pc
+-	@echo 'Name: Crypto++' >> libcryptopp.pc
+-	@echo 'Description: Crypto++ cryptographic library' >> libcryptopp.pc
+-	@echo 'Version: 8.6' >> libcryptopp.pc
+-	@echo 'URL: https://cryptopp.com/' >> libcryptopp.pc
+-	@echo '' >> libcryptopp.pc
+-	@echo 'Cflags: -I$${includedir}' >> libcryptopp.pc
+-	@echo 'Libs: -L$${libdir} -lcryptopp' >> libcryptopp.pc
++cryptopp.pc libcrypto++.pc:
++	@echo '# Crypto++ package configuration file' > libcrypto++.pc
++	@echo '' >> libcrypto++.pc
++	@echo 'prefix=$(PC_PREFIX)' >> libcrypto++.pc
++	@echo 'libdir=$(PC_LIBDIR)' >> libcrypto++.pc
++	@echo 'includedir=$(PC_INCLUDEDIR)' >> libcrypto++.pc
++	@echo 'datadir=$(PC_DATADIR)' >> libcrypto++.pc
++	@echo '' >> libcrypto++.pc
++	@echo 'Name: Crypto++' >> libcrypto++.pc
++	@echo 'Description: Crypto++ cryptographic library' >> libcrypto++.pc
++	@echo 'Version: 8.6' >> libcrypto++.pc
++	@echo 'URL: https://cryptopp.com/' >> libcrypto++.pc
++	@echo '' >> libcrypto++.pc
++	@echo 'Cflags: -I$${includedir}' >> libcrypto++.pc
++	@echo 'Libs: -L$${libdir} -lcrypto++' >> libcrypto++.pc
+ 
+ # This recipe prepares the distro files
+ TEXT_FILES := *.h *.cpp *.S GNUmakefile GNUmakefile-cross License.txt Readme.txt Install.txt Filelist.txt Doxyfile cryptest* cryptlib* dlltest* cryptdll* *.sln *.vcxproj *.filters cryptopp.rc TestVectors/*.txt TestData/*.dat TestPrograms/*.cpp
+@@ -1562,9 +1562,9 @@ endif
+ # CRYPTOPP_CPU_FREQ in GHz
+ CRYPTOPP_CPU_FREQ ?= 0.0
+ .PHONY: bench benchmark benchmarks
+-bench benchmark benchmarks: cryptest.exe
++bench benchmark benchmarks: cryptest
+ 	@-$(RM) -f benchmarks.html
+-	./cryptest.exe b 2 $(CRYPTOPP_CPU_FREQ)
++	./cryptest b 2 $(CRYPTOPP_CPU_FREQ)
+ 
+ adhoc.cpp: adhoc.cpp.proto
+ ifeq ($(wildcard adhoc.cpp),)
