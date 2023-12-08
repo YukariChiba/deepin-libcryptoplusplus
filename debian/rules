@@ -4,10 +4,15 @@
 # Uncomment this to turn on verbose mode.
 #export DH_VERBOSE=1
 
-DEB_HOST_MULTIARCH ?= $(shell dpkg-architecture -qDEB_HOST_MULTIARCH)
 DOC_PKG_DIR = $(CURDIR)/debian/libcrypto++-doc/
 
-CXXFLAGS+=-DNDEBUG
+DPKG_EXPORT_BUILDTOOLS=1
+include /usr/share/dpkg/architecture.mk
+include /usr/share/dpkg/buildtools.mk
+
+ifneq ($(filter $(DEB_HOST_ARCH),armel powerpc),)
+        export DEB_LDFLAGS_MAINT_APPEND= -latomic
+endif
 
 SONAME=8
 

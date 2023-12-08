@@ -78,7 +78,7 @@ for platform in "${PLATFORMS[@]}"
 do
     # setenv-android.sh reads these two variables for configuration info.
     # Android 5.0 is 21. Android 6.0 is 23.
-    export ANDROID_API="21"
+    export ANDROID_API="23"
     export ANDROID_CPU="${platform}"
 
     make -f GNUmakefile-cross distclean > /dev/null 2>&1
@@ -117,7 +117,10 @@ do
         then
 
             # Test NEON code generation
-            count=$(${OBJDUMP} --disassemble aria_simd.o 2>&1 | grep -c -E 'vld|vst|vshl|vshr|veor')
+            # In the past we looked for the vector loads, stores and shifts using vld and friends.
+            # It looks like objdump changed its output format on Android after Clang, so we need
+            # to check for statements like eor v0.16b, v2.16b, v0.16b nowadays.
+            count=$(${OBJDUMP} --disassemble chacha_simd.o 2>&1 | grep -c -E 'vld|vst|vshl|vshr|veor|v0\.|v1\.|v2\.|v3\.|v4\.|v5\.|v6\.|v7\.')
             if [[ "${count}" -gt 64 ]]
             then
                 echo "${platform} : NEON ==> SUCCESS" >> "${TMPDIR}/build.log"
@@ -130,7 +133,10 @@ do
         then
 
             # Test ASIMD code generation
-            count=$(${OBJDUMP} --disassemble aria_simd.o 2>&1 | grep -c -E 'vld|vst|vshl|vshr|veor')
+            # In the past we looked for the vector loads, stores and shifts using vld and friends.
+            # It looks like objdump changed its output format on Android after Clang, so we need
+            # to check for statements like eor v0.16b, v2.16b, v0.16b nowadays.
+            count=$(${OBJDUMP} --disassemble chacha_simd.o 2>&1 | grep -c -E 'vld|vst|vshl|vshr|veor|v0\.|v1\.|v2\.|v3\.|v4\.|v5\.|v6\.|v7\.')
             if [[ "${count}" -gt 64 ]]
             then
                 echo "${platform} : ASIMD ==> SUCCESS" >> "${TMPDIR}/build.log"

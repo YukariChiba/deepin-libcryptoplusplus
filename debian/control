@@ -2,7 +2,7 @@ Source: libcrypto++
 Section: libs
 Priority: optional
 Maintainer: Laszlo Boszormenyi (GCS) <gcs@debian.org>
-Standards-Version: 4.6.0
+Standards-Version: 4.6.2
 Build-Depends: debhelper-compat (= 13), automake, autoconf, libtool
 Build-Depends-Indep: doxygen
 Homepage: https://www.cryptopp.com
@@ -96,6 +96,7 @@ Description: General purpose cryptographic library - utilities and data files
 
 Package: libcrypto++-doc
 Architecture: all
+Multi-Arch: foreign
 Section: doc
 Depends: ${misc:Depends}, libjs-jquery
 Conflicts: libcrypto++-dev (<= 5.2.1c2-3)

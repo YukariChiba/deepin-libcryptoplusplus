@@ -1,3 +1,46 @@
+libcrypto++ (8.9.0-1) unstable; urgency=medium
+
+  * New upstream release.
+
+ -- Laszlo Boszormenyi (GCS) <gcs@debian.org>  Mon, 02 Oct 2023 17:51:51 +0200
+
+libcrypto++ (8.8.0-2) unstable; urgency=medium
+
+  * Update watch file.
+  * Update Standards-Version to 4.6.2 .
+
+ -- Laszlo Boszormenyi (GCS) <gcs@debian.org>  Thu, 07 Sep 2023 07:25:20 +0000
+
+libcrypto++ (8.8.0-1) unstable; urgency=medium
+
+  * New upstream release.
+
+  [ Helmut Grohne <helmut@subdivi.de> ]
+  * Fix FTCBFS: Export build tools for all targets (closes: #1018923).
+
+
+ -- Laszlo Boszormenyi (GCS) <gcs@debian.org>  Fri, 07 Jul 2023 17:20:07 +0200
+
+libcrypto++ (8.7.0+git220824-1) unstable; urgency=medium
+
+  * New git snapshot release.
+
+ -- Laszlo Boszormenyi (GCS) <gcs@debian.org>  Thu, 25 Aug 2022 19:44:25 +0200
+
+libcrypto++ (8.7.0-1) unstable; urgency=medium
+
+  * New upstream release (closes: #1012974).
+  * Add -fno-devirtualize to CXXFLAGS for GCC 12 not to remove code member
+    function needed for self-testing.
+
+ -- Laszlo Boszormenyi (GCS) <gcs@debian.org>  Sat, 13 Aug 2022 07:22:58 +0200
+
+libcrypto++ (8.6.0-3) unstable; urgency=medium
+
+  * Fix armhf FTBFS (closes: #1001995).
+
+ -- Laszlo Boszormenyi (GCS) <gcs@debian.org>  Sat, 12 Feb 2022 10:39:14 +0100
+
 libcrypto++ (8.6.0-2) unstable; urgency=medium
 
   * Fix armel and armhf link breakage.
